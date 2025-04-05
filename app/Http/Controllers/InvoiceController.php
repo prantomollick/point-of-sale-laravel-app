@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use Inertia\Inertia;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Customer;
@@ -60,18 +61,31 @@ class InvoiceController extends Controller
             }//end foreach
 
             DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Invoice created successfully'
-            ]);
+            // return response()->json([
+            //     'status' => 'success',
+            //     'message' => 'Invoice created successfully'
+            // ]);
+
+            $data = ['message'=>'Invoice created successfully','status'=>true,'error'=>''];
+            return redirect('/InvoiceListPage')->with($data);
         }catch(Exception $e){
             DB::rollBack();
-            return response()->json([
-                'status' => 'failed',
-                'message' => "Something went wrong"
-            ]);
+            // return response()->json([
+            //     'status' => 'failed',
+            //     'message' => "Something went wrong"
+            // ]);
+
+            $data = ['message'=>'Something went wrong','status'=>false,'error'=>$e->getMessage()];
+            return redirect()->back()->with($data);
         }
     }//end method
+
+    public function InvoiceListPage(Request $request){
+        $user_id = request()->header('id');
+        $list = Invoice::where('user_id', $user_id)
+            ->with('customer','invoiceProduct.product')->get();
+        return Inertia::render('InvoiceListPage', ['list' => $list]);
+    }
 
     public function InvoiceList(){
         $user_id = request()->header('id');
@@ -109,16 +123,20 @@ class InvoiceController extends Controller
                 ->delete();
 
             DB::commit();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Invoice deleted successfully'
-            ]);
+            // return response()->json([
+            //     'status' => 'success',
+            //     'message' => 'Invoice deleted successfully'
+            // ]);
+            $data = ['message'=>'Invoice deleted successfully','status'=>true,'error'=>''];
+            return redirect()->back()->with($data);
         }catch(Exception $e){
             DB::rollBack();
-            return response()->json([
-                'status' => 'failed',
-                'message' => "Something went wrong"
-            ]);
+            // return response()->json([
+            //     'status' => 'failed',
+            //     'message' => "Something went wrong"
+            // ]);
+            $data = ['message'=>'Something went wrong','status'=>false,'error'=>$e->getMessage()];
+            return redirect()->back()->with($data);
         }
     }
 }
